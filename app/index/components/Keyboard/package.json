@@ -1,0 +1,6 @@
+{
+  "name": "Keyboard",
+  "main": "./Keyboard.vue",
+  "version": "0.0.1",
+  "private": true
+}
