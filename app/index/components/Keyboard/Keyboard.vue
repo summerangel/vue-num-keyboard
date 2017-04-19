@@ -1,7 +1,6 @@
 <template>
   <div>
     <div class="num-keyboard-wrapper" :class="{open: pObj.open}">
-      <div class="finish" @mousedown="selectNumber('完成')">完成</div>
       <table class="table" border="0" cellspacing="0" cellpadding="0">
         <tbody>
         <tr v-for="item in numData">
@@ -14,7 +13,7 @@
 </template>
 <script>
   import events from '../../modules/events';
-  import eventHub from '../../modules/event-hub';
+  import eventHub, { keyboard } from '../../modules/event-hub';
 
   var numData = [
     {
@@ -100,23 +99,19 @@
       selectNumber(item) {
         if (item.value !== '删除' && item !== '完成') {
           this.pObj.inputVal += item.value;
-          eventHub.$emit(events.KEYBOARD_VALUE, this.pObj.inputVal);
-        }
-        else if (item.value === undefined && item === '完成') {
-          this.pObj.open = false;
+          keyboard.value(this.pObj.inputVal);
         }
         else if (item.value === '删除') {
           var num = this.pObj.inputVal;
           if (num) {
             var newNum = num.substr(0, num.length - 1);
             newNum = newNum === ''?'空':newNum;
-            eventHub.$emit(events.KEYBOARD_VALUE, newNum);
+            keyboard.value(newNum);
           }
         }
         eventHub.$on(events.TOGGLE_NUM_KEYBOARD, this.toggleKeyboard);
       },
       toggleKeyboard(obj) {
-        console.log('obj',obj);
         if (obj) {
           this.pObj = obj;
         }
@@ -132,7 +127,7 @@
     bottom: 0px;
     z-index: 1000;
     width: 100%;
-    height: 193px;
+    height: 159px;
     background-color: rgb(255, 255, 255);
     display: none;
   }

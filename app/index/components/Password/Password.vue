@@ -1,24 +1,38 @@
 <template>
   <div class="set-password">
-    <p class="set-password-tip">设置6位数字支付密码</p>
-    <div class="set-password-in">
-      <input hidden type="text" v-model="inputVal" maxlength="6">
-      <div class="password" @click="getInputVal">
-        <span class="pwd"><span v-if="sixPwd.one > 0">.</span></span>
-        <span class="pwd"><span v-if="sixPwd.two > 0">.</span></span>
-        <span class="pwd"><span v-if="sixPwd.three > 0">.</span></span>
-        <span class="pwd"><span v-if="sixPwd.four > 0">.</span></span>
-        <span class="pwd"><span v-if="sixPwd.five > 0">.</span></span>
-        <span class="pwd"><span v-if="sixPwd.six > 0">.</span></span>
+    <div style="width: 100%;min-height: 500px;" @mousedown.stop="closeKeyboard">
+      <p class="set-password-tip">设置6位数字支付密码</p>
+      <div class="mock-pwd clearfix">
+        <ol>
+          <li @mousedown.stop="toggleKeyboard" v-for="n in pwdNumbers" :class="{active: n === 1}">
+          </li>
+        </ol>
+      </div>
+      <div class="input-wrapper">
+        <input minlength="6" maxlength="6"
+               class="pwd-input form-control" type="text"
+               v-model="inputVal" :id="'amount'">
       </div>
     </div>
+    <Keyboard></Keyboard>
   </div>
 </template>
 <script>
   import events from '../../modules/events';
-  import eventHub from '../../modules/event-hub';
+  import eventHub, { keyboard } from '../../modules/event-hub';
+  import Keyboard from '../Keyboard';
+  let input;
 
   export default {
+    mounted () {
+      input = document.getElementById('amount');
+    },
+    beforeRouteEnter (to, from, next) {
+      next(vm => {
+        input.focus();
+        eventHub.$on(events.KEYBOARD_VALUE, this.getNumHandler);
+      })
+    },
     beforeUpdate () {
       eventHub.$on(events.KEYBOARD_VALUE, this.getNumHandler);
       this.checkPayPassword();
@@ -26,7 +40,7 @@
         open: true,
         inputVal: this.inputVal
       };
-      eventHub.$emit(events.TOGGLE_NUM_KEYBOARD, obj);
+      keyboard.open(obj);
     },
     data() {
       return {
@@ -34,21 +48,30 @@
       }
     },
     computed: {
-      sixPwd() {
+      pwdNumbers() {
         this.getInputVal();
-        var sixPwd = {
-          one: this.inputVal.length > 0?this.inputVal.substring(0,1):'',
-          two: this.inputVal.length > 1?this.inputVal.substring(1,2):'',
-          three: this.inputVal.length > 2?this.inputVal.substring(2,3):'',
-          four: this.inputVal.length > 3?this.inputVal.substring(3,4):'',
-          five: this.inputVal.length > 4?this.inputVal.substring(4,5):'',
-          six: this.inputVal.length > 5?this.inputVal.substring(5,6):''
-        }
-        console.log('sixPwd',sixPwd);
-        return sixPwd;
+        let pwdNumbers = [0, 0, 0, 0, 0, 0];
+        const l = this.inputVal.length - 1;
+        pwdNumbers = pwdNumbers.map((number, index) => {
+          return index <= l ? 1 : 0;
+        });
+        return pwdNumbers;
       }
     },
+    components: { Keyboard },
     methods: {
+      toggleKeyboard(e) {
+        input.focus();
+        this.getInputVal();
+      },
+      closeKeyboard(e) {
+        e.preventDefault();
+        var obj = {
+          open: false,
+          inputVal: this.inputVal
+        };
+        keyboard.close(obj);
+      },
       checkPayPassword() {
         this.inputVal = this.inputVal.replace(/\D/g, '');
         if (/^\d{6}$/.test(this.inputVal)) {
@@ -67,7 +90,7 @@
           open: true,
           inputVal: this.inputVal
         };
-        eventHub.$emit(events.TOGGLE_NUM_KEYBOARD, obj);
+        keyboard.open(obj);
       },
       getNumHandler(val) {
         if (val) {
@@ -77,34 +100,4 @@
     }
   }
 </script>
-<style>
-  .set-password {
-
-  }
-  .set-password-tip {
-    padding: 1.5rem 1rem;
-    text-align: center;
-  }
-  .set-password-in {
-    margin: 0 2rem;
-    border: 1px solid #4F4F4F;
-    border-radius: 5px;
-  }
-  .password {
-    width: 100%;
-    display: -webkit-flex;
-    display: -ms-flexbox;
-    display: flex;
-    height: 3rem;
-    border: 0;
-  }
-  .pwd {
-    -webkit-flex: 1;
-    -ms-flex: 1;
-    flex: 1;
-    border: 1px solid #4F4F4F;
-    height: 3rem;
-    text-align: center;
-    line-height: 2.5rem;
-  }
-</style>
+<style src="./Password.scss" lang="sass"></style>
